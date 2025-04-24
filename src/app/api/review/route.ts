@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         reviewChunks
       );
 
-      const reviewComments = [];
+      const LLMReviewComments = [];
 
       for (const chunk of slicedChunks) {
         const { object } = await generateObject({
@@ -106,26 +106,17 @@ export async function POST(request: NextRequest) {
             line: line,
           });
 
-          reviewComments.push(reviewComment);
+          LLMReviewComments.push(reviewComment);
         }
       }
 
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-
-      return NextResponse.json({ reviewComments });
+      return NextResponse.json({ LLMReviewComments });
     } catch (error) {
       console.error(error);
 
       return NextResponse.json({ error: error }, { status: 500 });
     }
   }
+
+  return NextResponse.json({ success: true });
 }
