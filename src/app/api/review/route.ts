@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (pull_request.state !== "open" || action === "resolved") {
+  if (pull_request.state !== "open" || action !== "resolved") {
     return NextResponse.json({ success: true });
   }
 
