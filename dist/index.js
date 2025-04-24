@@ -21,7 +21,6 @@ export const handler = async (req, res) => {
         const source = req.headers["user-agent"]?.includes("GitHub-Hookshot")
             ? "webhook"
             : "action";
-        console.log("source", source);
         if (source === "webhook") {
             const signature = req.headers["x-hub-signature-256"] ?? "";
             const isValid = await webhooks.verify(payload, signature);
