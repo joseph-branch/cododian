@@ -40,7 +40,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (pull_request.state !== "open" || action !== "resolved") {
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      {
+        status: "skipped",
+        reason: "Pull request state is not 'open' or action is not 'resolved'.",
+      },
+      { status: 202 }
+    );
   }
 
   const { data: files } = await octokit.rest.pulls.listFiles({
