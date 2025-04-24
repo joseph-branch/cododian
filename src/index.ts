@@ -13,6 +13,8 @@ const openai = createOpenAI({
   compatibility: "strict",
 });
 
+console.log(process.env.GITHUB_SECRET)
+
 export const reviewCode = async (req: Request, res: Response) => {
   try {
     const payload = JSON.stringify(req.body);
