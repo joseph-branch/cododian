@@ -114,6 +114,9 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error(error);
       console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
 
       return NextResponse.json({ error: error }, { status: 500 });
     }
