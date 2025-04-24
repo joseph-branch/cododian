@@ -17,9 +17,9 @@ jobs:
           response=$(curl --fail -s -w "%{http_code}" -o output.json \
             -X POST "$CODODIAN_API_URL" \
             -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: ${{ github.event_name }}" \
             -d '{
               "action": "${{ github.event.action }}",
-              "event_type": "${{ github.event_name }}",
               "pull_request": {
                 "number": "${{ github.event.pull_request.number }}",
                 "head": {
