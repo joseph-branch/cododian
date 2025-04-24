@@ -39,6 +39,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (pull_request.state !== "open") {
+    return NextResponse.json({ success: true });
+  }
+
   const { data: files } = await octokit.rest.pulls.listFiles({
     owner: pull_request.base.repo.owner.login,
     repo: pull_request.base.repo.name,
@@ -81,13 +85,13 @@ export async function POST(request: NextRequest) {
           model: openai("gpt-4o-mini"),
           schema: z.object({
             comment: z.string(),
-            should_ignore: z.boolean(),
+            needsImprovement: z.boolean(),
           }),
-          system: `You are a helpful assistant that reviews code and provides feedback on the code. Keep the comments concise and to the point. If the code is not worth reviewing, set should_ignore to true.`,
+          system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point. If the code does not have any issues, set needsImprovement to false.`,
           prompt: chunk.text,
         });
 
-        if (!object.should_ignore) {
+        if (object.needsImprovement) {
           const line = chunk.endLine;
           await octokit.rest.pulls.createReviewComment({
             owner: pull_request.base.repo.owner.login,
