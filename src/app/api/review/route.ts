@@ -105,6 +105,8 @@ export async function POST(request: NextRequest) {
           });
         }
       }
+
+      console.log("The file has been reviewed");
     } catch (error) {
       console.error(error);
     }
