@@ -20,12 +20,18 @@ const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN! });
 export async function POST(request: NextRequest) {
   const payload = await request.text();
 
-  const signature = request.headers.get("x-hub-signature-256") ?? "";
+  const source = request.headers.get("user-agent")?.includes("GitHub-Hookshot")
+    ? "webhook"
+    : "action";
 
-  const isValid = await webhooks.verify(payload, signature);
+  if (source === "webhook") {
+    const signature = request.headers.get("x-hub-signature-256") ?? "";
 
-  if (!isValid) {
-    return NextResponse.json({ isValid: false }, { status: 401 });
+    const isValid = await webhooks.verify(payload, signature);
+
+    if (!isValid) {
+      return NextResponse.json({ isValid: false }, { status: 401 });
+    }
   }
 
   const { action, pull_request } = JSON.parse(payload);
