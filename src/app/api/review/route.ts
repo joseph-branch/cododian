@@ -39,7 +39,95 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (pull_request.state !== "open" || action !== "resolved") {
+  const eventType = request.headers.get("x-github-event");
+
+  if (
+    (eventType === "pull_request" && action === "opened") ||
+    (eventType === "pull_request_review_thread" && action === "resolved")
+  ) {
+    const { data: files } = await octokit.rest.pulls.listFiles({
+      owner: pull_request.base.repo.owner.login,
+      repo: pull_request.base.repo.name,
+      pull_number: pull_request.number,
+    });
+
+    for await (const file of files) {
+      if (
+        (file.status !== "added" && file.status !== "modified") ||
+        !file.patch
+      ) {
+        continue;
+      }
+
+      try {
+        const { data: content } = await octokit.rest.repos.getContent({
+          owner: pull_request.base.repo.owner.login,
+          repo: pull_request.base.repo.name,
+          path: file.filename,
+          ref: pull_request.head.sha,
+        });
+
+        if (Array.isArray(content) || content.type !== "file") {
+          continue;
+        }
+
+        const decodedContent = Buffer.from(content.content, "base64").toString(
+          "utf-8"
+        );
+
+        const reviewChunks = analyzeDiffForReview(file.patch, file.filename);
+
+        const slicedChunks = sliceFileByReviewChunks(
+          decodedContent,
+          reviewChunks
+        );
+
+        const LLMReviewComments = [];
+
+        for (const chunk of slicedChunks) {
+          const { object } = await generateObject({
+            model: openai("gpt-4o-mini"),
+            schema: z.object({
+              comment: z.string(),
+              needsImprovement: z.boolean(),
+            }),
+            system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point. If the code does not have any issues, set needsImprovement to false.`,
+            prompt: `File: ${file.filename}\n\n${chunk.text}`,
+          });
+
+          if (object.needsImprovement) {
+            const line = chunk.endLine;
+            const reviewComment = await octokit.rest.pulls.createReviewComment({
+              owner: pull_request.base.repo.owner.login,
+              repo: pull_request.base.repo.name,
+              pull_number: pull_request.number,
+              body: object.comment,
+              path: file.filename,
+              commit_id: pull_request.head.sha,
+              side: "RIGHT",
+              line: line,
+            });
+
+            LLMReviewComments.push(reviewComment);
+          }
+        }
+
+        return NextResponse.json({ LLMReviewComments });
+      } catch (error) {
+        console.error(error);
+
+        return NextResponse.json(
+          { error: "Server Internal Error" },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json({
+      status: "success",
+      reason: "No issues found",
+    });
+  } else {
     return NextResponse.json(
       {
         status: "skipped",
@@ -48,84 +136,4 @@ export async function POST(request: NextRequest) {
       { status: 202 }
     );
   }
-
-  const { data: files } = await octokit.rest.pulls.listFiles({
-    owner: pull_request.base.repo.owner.login,
-    repo: pull_request.base.repo.name,
-    pull_number: pull_request.number,
-  });
-
-  for await (const file of files) {
-    if (
-      (file.status !== "added" && file.status !== "modified") ||
-      !file.patch
-    ) {
-      continue;
-    }
-
-    try {
-      const { data: content } = await octokit.rest.repos.getContent({
-        owner: pull_request.base.repo.owner.login,
-        repo: pull_request.base.repo.name,
-        path: file.filename,
-        ref: pull_request.head.sha,
-      });
-
-      if (Array.isArray(content) || content.type !== "file") {
-        continue;
-      }
-
-      const decodedContent = Buffer.from(content.content, "base64").toString(
-        "utf-8"
-      );
-
-      const reviewChunks = analyzeDiffForReview(file.patch, file.filename);
-
-      const slicedChunks = sliceFileByReviewChunks(
-        decodedContent,
-        reviewChunks
-      );
-
-      const LLMReviewComments = [];
-
-      for (const chunk of slicedChunks) {
-        const { object } = await generateObject({
-          model: openai("gpt-4o-mini"),
-          schema: z.object({
-            comment: z.string(),
-            needsImprovement: z.boolean(),
-          }),
-          system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point. If the code does not have any issues, set needsImprovement to false.`,
-          prompt: `File: ${file.filename}\n\n${chunk.text}`,
-        });
-
-        if (object.needsImprovement) {
-          const line = chunk.endLine;
-          const reviewComment = await octokit.rest.pulls.createReviewComment({
-            owner: pull_request.base.repo.owner.login,
-            repo: pull_request.base.repo.name,
-            pull_number: pull_request.number,
-            body: object.comment,
-            path: file.filename,
-            commit_id: pull_request.head.sha,
-            side: "RIGHT",
-            line: line,
-          });
-
-          LLMReviewComments.push(reviewComment);
-        }
-      }
-
-      return NextResponse.json({ LLMReviewComments });
-    } catch (error) {
-      console.error(error);
-
-      return NextResponse.json(
-        { error: "Server Internal Error" },
-        { status: 500 }
-      );
-    }
-  }
-
-  return NextResponse.json({ success: true });
 }
