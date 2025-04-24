@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
         reviewChunks
       );
 
+      const reviewComments = [];
+
       for (const chunk of slicedChunks) {
         const { object } = await generateObject({
           model: openai("gpt-4o-mini"),
@@ -93,7 +95,7 @@ export async function POST(request: NextRequest) {
 
         if (object.needsImprovement) {
           const line = chunk.endLine;
-          await octokit.rest.pulls.createReviewComment({
+          const reviewComment = await octokit.rest.pulls.createReviewComment({
             owner: pull_request.base.repo.owner.login,
             repo: pull_request.base.repo.name,
             pull_number: pull_request.number,
@@ -103,14 +105,27 @@ export async function POST(request: NextRequest) {
             side: "RIGHT",
             line: line,
           });
+
+          reviewComments.push(reviewComment);
         }
       }
 
       console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+      console.log("The file has been reviewed");
+
+      return NextResponse.json({ reviewComments });
     } catch (error) {
       console.error(error);
+
+      return NextResponse.json({ error: error }, { status: 500 });
     }
   }
-
-  return NextResponse.json({ success: true });
 }
