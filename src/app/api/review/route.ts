@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ LLMReviewComments });
     } catch (error) {
       console.error(error);
+      console.log("The file has been reviewed");
 
       return NextResponse.json({ error: error }, { status: 500 });
     }
