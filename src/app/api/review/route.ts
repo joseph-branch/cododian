@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
         for (const chunk of slicedChunks) {
           const { object } = await generateObject({
-            model: openai("gpt-4o-mini"),
+            model: openai("gpt-4.1-mini"),
             schema: z.object({
               comment: z.string(),
               needsImprovement: z.boolean(),
