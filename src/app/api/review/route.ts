@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ isValid: false }, { status: 401 });
   }
 
-  const { pull_request } = JSON.parse(payload);
+  const { action, pull_request } = JSON.parse(payload);
 
   if (!pull_request) {
     return NextResponse.json(
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (pull_request.state !== "open") {
+  if (pull_request.state !== "open" || action !== "resolved") {
     return NextResponse.json({ success: true });
   }
 
@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
         reviewChunks
       );
 
+      const LLMReviewComments = [];
+
       for (const chunk of slicedChunks) {
         const { object } = await generateObject({
           model: openai("gpt-4o-mini"),
@@ -93,7 +95,7 @@ export async function POST(request: NextRequest) {
 
         if (object.needsImprovement) {
           const line = chunk.endLine;
-          await octokit.rest.pulls.createReviewComment({
+          const reviewComment = await octokit.rest.pulls.createReviewComment({
             owner: pull_request.base.repo.owner.login,
             repo: pull_request.base.repo.name,
             pull_number: pull_request.number,
@@ -103,10 +105,16 @@ export async function POST(request: NextRequest) {
             side: "RIGHT",
             line: line,
           });
+
+          LLMReviewComments.push(reviewComment);
         }
       }
+
+      return NextResponse.json({ LLMReviewComments });
     } catch (error) {
       console.error(error);
+
+      return NextResponse.json({ error: error }, { status: 500 });
     }
   }
 
