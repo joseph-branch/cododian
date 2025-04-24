@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ isValid: false }, { status: 401 });
   }
 
-  const { pull_request } = JSON.parse(payload);
+  const { action, pull_request } = JSON.parse(payload);
 
   if (!pull_request) {
     return NextResponse.json(
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (pull_request.state !== "open") {
+  if (pull_request.state !== "open" || action === "resolved") {
     return NextResponse.json({ success: true });
   }
 
