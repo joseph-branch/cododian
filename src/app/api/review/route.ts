@@ -15,6 +15,8 @@ const openai = createOpenAI({
   compatibility: "strict",
 });
 
+console.log(process.env.GITHUB_SECRET)
+
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN! });
 
 export async function POST(request: NextRequest) {
