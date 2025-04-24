@@ -1,10 +1,13 @@
+import { config } from "dotenv";
 import { Request, Response } from "express";
 import { Octokit } from "@octokit/rest";
 import { Webhooks } from "@octokit/webhooks";
 import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
-import { analyzeDiffForReview, sliceFileByReviewChunks } from "@/lib/utils";
+import { analyzeDiffForReview, sliceFileByReviewChunks } from "./lib/utils.js";
+
+config();
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN! });
 const webhooks = new Webhooks({ secret: process.env.GITHUB_WEBHOOK_SECRET! });
@@ -13,7 +16,7 @@ const openai = createOpenAI({
   compatibility: "strict",
 });
 
-export const reviewCode = async (req: Request, res: Response) => {
+export const handler = async (req: Request, res: Response) => {
   try {
     const payload = JSON.stringify(req.body);
     const eventType = req.headers["x-github-event"];

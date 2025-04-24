@@ -1,19 +1,18 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.reviewCode = void 0;
-const rest_1 = require("@octokit/rest");
-const webhooks_1 = require("@octokit/webhooks");
-const ai_1 = require("ai");
-const openai_1 = require("@ai-sdk/openai");
-const zod_1 = require("zod");
-const utils_1 = require("@/lib/utils");
-const octokit = new rest_1.Octokit({ auth: process.env.GITHUB_TOKEN });
-const webhooks = new webhooks_1.Webhooks({ secret: process.env.GITHUB_WEBHOOK_SECRET });
-const openai = (0, openai_1.createOpenAI)({
+import { config } from "dotenv";
+import { Octokit } from "@octokit/rest";
+import { Webhooks } from "@octokit/webhooks";
+import { generateObject } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { z } from "zod";
+import { analyzeDiffForReview, sliceFileByReviewChunks } from "./lib/utils.js";
+config();
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+const webhooks = new Webhooks({ secret: process.env.GITHUB_WEBHOOK_SECRET });
+const openai = createOpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     compatibility: "strict",
 });
-const reviewCode = async (req, res) => {
+export const handler = async (req, res) => {
     try {
         const payload = JSON.stringify(req.body);
         const eventType = req.headers["x-github-event"];
@@ -22,6 +21,7 @@ const reviewCode = async (req, res) => {
         const source = req.headers["user-agent"]?.includes("GitHub-Hookshot")
             ? "webhook"
             : "action";
+        console.log("source", source);
         if (source === "webhook") {
             const signature = req.headers["x-hub-signature-256"] ?? "";
             const isValid = await webhooks.verify(payload, signature);
@@ -55,14 +55,14 @@ const reviewCode = async (req, res) => {
                 if (Array.isArray(content) || content.type !== "file")
                     continue;
                 const decodedContent = Buffer.from(content.content, "base64").toString("utf-8");
-                const reviewChunks = (0, utils_1.analyzeDiffForReview)(file.patch, file.filename);
-                const slicedChunks = (0, utils_1.sliceFileByReviewChunks)(decodedContent, reviewChunks);
+                const reviewChunks = analyzeDiffForReview(file.patch, file.filename);
+                const slicedChunks = sliceFileByReviewChunks(decodedContent, reviewChunks);
                 for (const chunk of slicedChunks) {
-                    const { object } = await (0, ai_1.generateObject)({
+                    const { object } = await generateObject({
                         model: openai("gpt-4.1-mini"),
-                        schema: zod_1.z.object({
-                            comment: zod_1.z.string(),
-                            needsImprovement: zod_1.z.boolean(),
+                        schema: z.object({
+                            comment: z.string(),
+                            needsImprovement: z.boolean(),
                         }),
                         system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point.`,
                         prompt: `File: ${file.filename}\n\n${chunk.text}`,
@@ -95,4 +95,3 @@ const reviewCode = async (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 };
-exports.reviewCode = reviewCode;

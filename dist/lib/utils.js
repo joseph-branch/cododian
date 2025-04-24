@@ -1,13 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.analyzeDiffForReview = analyzeDiffForReview;
-exports.sliceFileByReviewChunks = sliceFileByReviewChunks;
-const parse_diff_1 = __importDefault(require("parse-diff"));
-function analyzeDiffForReview(patch, filename) {
-    const files = (0, parse_diff_1.default)(patch);
+import parse from "parse-diff";
+export function analyzeDiffForReview(patch, filename) {
+    const files = parse(patch);
     const ranges = [];
     if (!files || files.length === 0)
         return ranges;
@@ -32,7 +25,7 @@ function analyzeDiffForReview(patch, filename) {
     }
     return ranges;
 }
-function sliceFileByReviewChunks(fullText, reviewChunks) {
+export function sliceFileByReviewChunks(fullText, reviewChunks) {
     const allLines = fullText.split("\n");
     return reviewChunks.map((chunk) => {
         const lines = allLines.slice(chunk.startLine - 1, chunk.endLine);
