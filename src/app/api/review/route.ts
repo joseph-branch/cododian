@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
             needsImprovement: z.boolean(),
           }),
           system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point. If the code does not have any issues, set needsImprovement to false.`,
-          prompt: chunk.text,
+          prompt: `File: ${file.filename}\n\n${chunk.text}`,
         });
 
         if (object.needsImprovement) {
@@ -114,7 +114,10 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error(error);
 
-      return NextResponse.json({ error: error }, { status: 500 });
+      return NextResponse.json(
+        { error: "Server Internal Error" },
+        { status: 500 }
+      );
     }
   }
 
