@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
             needsImprovement: z.boolean(),
           }),
           system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point. If the code does not have any issues, set needsImprovement to false.`,
-          prompt: chunk.text,
+          prompt: `File: ${file.filename}\n\n${chunk.text}`,
         });
 
         if (object.needsImprovement) {
@@ -113,12 +113,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ LLMReviewComments });
     } catch (error) {
       console.error(error);
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
-      console.log("The file has been reviewed");
 
-      return NextResponse.json({ error: error }, { status: 500 });
+      return NextResponse.json(
+        { error: "Server Internal Error" },
+        { status: 500 }
+      );
     }
   }
 
