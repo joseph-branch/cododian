@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { Request, Response } from "express";
+import express, { Request, Response } from "express";
 import { Octokit } from "@octokit/rest";
 import { Webhooks } from "@octokit/webhooks";
 import { generateObject } from "ai";
@@ -16,7 +16,7 @@ const openai = createOpenAI({
   compatibility: "strict",
 });
 
-export const handler = async (req: Request, res: Response) => {
+export const handler = async (req: any, res: any) => {
   try {
     const payload = JSON.stringify(req.body);
     const eventType = req.headers["x-github-event"];
@@ -120,3 +120,12 @@ export const handler = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+const app = express();
+const port = process.env.PORT || 8080;
+
+app.post("/", handler);
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
