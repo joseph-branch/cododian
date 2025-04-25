@@ -122,10 +122,10 @@ export const handler = async (req: any, res: any) => {
 };
 
 const app = express();
-const port = process.env.PORT || 8080;
+const port = parseInt(process.env.PORT || "8080", 10);
 
 app.post("/", handler);
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
 });
