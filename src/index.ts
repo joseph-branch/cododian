@@ -32,7 +32,7 @@ const openai = createOpenAI({
   compatibility: "strict",
 });
 
-export const handler = async (req: any, res: any) => {
+const handler = async (req: any, res: any) => {
   try {
     const payload = JSON.stringify(req.body);
     const eventType = req.headers["x-github-event"];
