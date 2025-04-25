@@ -8,6 +8,7 @@ import { z } from "zod";
 import { analyzeDiffForReview, sliceFileByReviewChunks } from "./lib/utils.js";
 
 const app = express();
+app.use(express.json());
 
 const port = parseInt(process.env.PORT || "8080", 10);
 
