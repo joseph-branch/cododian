@@ -8,6 +8,8 @@ import { z } from "zod";
 import { analyzeDiffForReview, sliceFileByReviewChunks } from "./lib/utils.js";
 
 const app = express();
+app.use(express.json());
+
 const port = parseInt(process.env.PORT || "8080", 10);
 
 config();
@@ -135,6 +137,15 @@ const handler = async (req: any, res: any) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// Health check endpoints
+app.get("/", (req, res) => {
+  res.status(200).send("✅ Service is running.");
+});
+
+app.get("/healthz", (req, res) => {
+  res.status(200).send("✅ Health check OK.");
+});
 
 app.post("/", handler);
 
