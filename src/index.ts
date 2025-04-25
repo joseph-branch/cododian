@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import express, { Request, Response } from "express";
+import express from "express";
 import { Octokit } from "@octokit/rest";
 import { Webhooks } from "@octokit/webhooks";
 import { generateObject } from "ai";
@@ -126,6 +126,6 @@ const port = parseInt(process.env.PORT || "8080", 10);
 
 app.post("/", handler);
 
-app.listen(port, "0.0.0.0", () => {
+app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
