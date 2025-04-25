@@ -7,7 +7,22 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 import { analyzeDiffForReview, sliceFileByReviewChunks } from "./lib/utils.js";
 
+const app = express();
+const port = parseInt(process.env.PORT || "8080", 10);
+
 config();
+
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+if (!GITHUB_TOKEN || !GITHUB_WEBHOOK_SECRET || !OPENAI_API_KEY) {
+  console.error("❌ Missing one or more required environment variables:");
+  console.error("GITHUB_TOKEN:", !!GITHUB_TOKEN);
+  console.error("GITHUB_WEBHOOK_SECRET:", !!GITHUB_WEBHOOK_SECRET);
+  console.error("OPENAI_API_KEY:", !!OPENAI_API_KEY);
+  process.exit(1); // Fail early, cleanly
+}
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN! });
 const webhooks = new Webhooks({ secret: process.env.GITHUB_WEBHOOK_SECRET! });
@@ -120,9 +135,6 @@ export const handler = async (req: any, res: any) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
-
-const app = express();
-const port = parseInt(process.env.PORT || "8080", 10);
 
 app.post("/", handler);
 
