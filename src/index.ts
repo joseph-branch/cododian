@@ -26,6 +26,8 @@ if (!GITHUB_TOKEN || !GITHUB_WEBHOOK_SECRET || !OPENAI_API_KEY) {
   process.exit(1); // Fail early, cleanly
 }
 
+console.log(process.env.GITHUB_SECRET)
+
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN! });
 const webhooks = new Webhooks({ secret: process.env.GITHUB_WEBHOOK_SECRET! });
 const openai = createOpenAI({
