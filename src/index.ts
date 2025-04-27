@@ -97,7 +97,7 @@ const handler = async (req: any, res: any) => {
 
         for (const chunk of slicedChunks) {
           const { object } = await generateObject({
-            model: openai.responses("gpt-4.1-mini"),
+            model: openai("gpt-4.1-mini"),
             schema: z.object({
               comment: z.string(),
               needsImprovement: z.boolean(),
