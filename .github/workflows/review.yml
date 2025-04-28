@@ -1,0 +1,43 @@
+name: Send PR context to Cododian
+
+on:
+  pull_request:
+    types: [opened]
+
+env:
+  CODODIAN_API_URL: ${{ secrets.CODODIAN_API_URL }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send PR context to Cododian
+        run: |
+          response=$(curl --fail -s -w "%{http_code}" -o output.json \
+            -X POST "$CODODIAN_API_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: ${{ github.event_name }}" \
+            -d '{
+              "action": "${{ github.event.action }}",
+              "pull_request": {
+                "number": "${{ github.event.pull_request.number }}",
+                "head": {
+                  "sha": "${{ github.event.pull_request.head.sha }}"
+                },
+                "base": {
+                  "repo": {
+                    "name": "${{ github.event.repository.name }}",
+                    "owner": { "login": "${{ github.repository_owner }}" }
+                  }
+                }
+              }
+          }')
+
+          if [[ "$response" -ge 200 && "$response" -lt 300 ]]; then
+            echo "Cododian review succeeded (HTTP $response)"
+          else
+            echo "Cododian review failed (HTTP $response)"
+            cat output.json
+            exit 1
+          fi
