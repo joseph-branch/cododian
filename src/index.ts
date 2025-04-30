@@ -26,6 +26,8 @@ if (!GITHUB_TOKEN || !GITHUB_WEBHOOK_SECRET || !OPENAI_API_KEY) {
   process.exit(1);
 }
 
+console.log(GITHUB_SECRET)
+
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 const webhooks = new Webhooks({ secret: GITHUB_WEBHOOK_SECRET });
 const openai = createOpenAI({
@@ -145,6 +147,10 @@ app.get("/", (req, res) => {
 
 app.get("/healthz", (req, res) => {
   res.status(200).send("✅ Health check OK.");
+});
+
+app.get("/demo-broken", (req, res) => {
+  response.status(200).send("This is broken);
 });
 
 app.post("/", handler);
