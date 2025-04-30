@@ -154,6 +154,10 @@ app.get("/healthz", (req, res) => {
   res.status(200).send("✅ Health check OK.");
 });
 
+app.get("health-check", (res, req) => {
+  res.status(200).send("✅ Health check OK.");
+});
+
 app.post("/", handler);
 
 app.listen(port, "0.0.0.0", () => {
