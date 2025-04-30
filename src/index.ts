@@ -103,7 +103,14 @@ const handler = async (req: any, res: any) => {
               needsImprovement: z.boolean(),
             }),
             system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point.`,
-            prompt: `File: ${file.filename}\n\n${chunk.text}`,
+            prompt: `File: ${file.filename}
+                      <existing-file-context>
+                      {file?.content}
+                      </existing-file-context>
+          
+                      <content-to-review>
+                      {chunk.text}
+                      <content-to-review>`,
           });
 
           if (object.needsImprovement) {
