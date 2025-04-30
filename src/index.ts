@@ -105,11 +105,11 @@ const handler = async (req: any, res: any) => {
             system: `You are a helpful assistant that reviews code and looks for code smells, bugs, and other issues. Keep the comments concise and to the point.`,
             prompt: `File: ${file.filename}
                       <existing-file-context>
-                      {file?.content}
+                      ${file?.content}
                       </existing-file-context>
           
                       <content-to-review>
-                      {chunk.text}
+                      ${chunk.text}
                       <content-to-review>`,
           });
 
